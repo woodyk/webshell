@@ -116,16 +116,26 @@ if (isset($_GET['download'])) {
             display: flex;
             height: 100vh;
             overflow: hidden;
+            position: relative;
+        }
+        canvas {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: 0;
         }
         .terminal {
             width: calc(100% - 300px);
             height: 100%;
-            background-color: #000;
+            background-color: rgba(0, 0, 0, 0.8);
             padding: 10px;
             box-sizing: border-box;
             display: flex;
             flex-direction: column;
             transition: width 0.3s;
+            z-index: 1;
         }
         .output {
             flex-grow: 1;
@@ -146,13 +156,14 @@ if (isset($_GET['download'])) {
         .file-manager {
             width: 300px;
             height: 100%;
-            background-color: #111;
+            background-color: rgba(17, 17, 17, 0.9);
             padding: 10px;
             box-sizing: border-box;
             overflow-y: auto;
             border-left: 1px solid #333;
             transition: width 0.3s;
             position: relative;
+            z-index: 1;
         }
         .file-manager ul {
             list-style: none;
@@ -176,6 +187,7 @@ if (isset($_GET['download'])) {
             position: absolute;
             left: -5px;
             top: 0;
+            z-index: 2;
         }
         .toggle-button {
             width: 20px;
@@ -202,6 +214,7 @@ if (isset($_GET['download'])) {
     </style>
 </head>
 <body>
+    <canvas id="bgCanvas"></canvas>
     <div class="terminal" id="terminal">
         <div class="output" id="output"><?php echo isset($_SESSION['output']) ? $_SESSION['output'] : ''; ?></div>
         <form method="POST" id="commandForm">
@@ -213,6 +226,7 @@ if (isset($_GET['download'])) {
         <div class="toggle-button" id="toggleButton">&lt;</div>
         <?php echo list_directory($cwd); ?>
     </div>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
     <script>
         const outputDiv = document.getElementById('output');
         outputDiv.scrollTop = outputDiv.scrollHeight;
@@ -292,7 +306,36 @@ if (isset($_GET['download'])) {
                 toggleButton.innerHTML = '&lt;';
             }
         });
+
+        // Three.js setup
+        const scene = new THREE.Scene();
+        const camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
+        const renderer = new THREE.WebGLRenderer({ canvas: document.getElementById('bgCanvas'), alpha: true });
+        renderer.setSize(window.innerWidth, window.innerHeight);
+        
+        // Simple animation: rotating cube
+        const geometry = new THREE.BoxGeometry();
+        const material = new THREE.MeshBasicMaterial({ color: 0x00ff00, wireframe: true });
+        const cube = new THREE.Mesh(geometry, material);
+        scene.add(cube);
+
+        camera.position.z = 5;
+
+        function animate() {
+            requestAnimationFrame(animate);
+
+            cube.rotation.x += 0.01;
+            cube.rotation.y += 0.01;
+
+            renderer.render(scene, camera);
+        }
+        animate();
+
+        window.addEventListener('resize', () => {
+            camera.aspect = window.innerWidth / window.innerHeight;
+            camera.updateProjectionMatrix();
+            renderer.setSize(window.innerWidth, window.innerHeight);
+        });
     </script>
 </body>
 </html>
-
